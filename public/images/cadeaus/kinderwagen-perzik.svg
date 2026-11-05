@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 300" role="img" aria-label="Kinderwagen in perzik">
+  <!-- Example gift image (local file). Replace with your own photos in public/images/cadeaus/. -->
+  <rect width="400" height="300" fill="#fbefe4"/>
+  <ellipse cx="205" cy="282" rx="150" ry="10" fill="#000" opacity=".06"/>
+  <!-- frame -->
+  <g stroke="#6d6a66" stroke-width="7" stroke-linecap="round" fill="none">
+    <path d="M150 210 L 135 252 M270 210 L 285 252"/>
+    <path d="M300 160 L 345 82"/>
+  </g>
+  <rect x="330" y="70" width="34" height="14" rx="7" fill="#4a4743" transform="rotate(-58 347 77)"/>
+  <!-- basket -->
+  <path d="M86 150 Q 86 222 170 222 H 262 Q 306 222 306 168 V150Z" fill="#f4b88f"/>
+  <path d="M86 150 H306" stroke="#d9906a" stroke-width="6" stroke-linecap="round"/>
+  <!-- hood -->
+  <path d="M86 150 A 108 108 0 0 1 196 44 L 196 150Z" fill="#d9906a"/>
+  <path d="M120 150 A 76 76 0 0 1 196 76 M154 150 A 42 42 0 0 1 196 108" fill="none" stroke="#f4b88f" stroke-width="4" opacity=".55"/>
+  
+  <!-- wheels -->
+  <g>
+    <circle cx="135" cy="252" r="28" fill="#4a4743"/><circle cx="135" cy="252" r="12" fill="#cfcac3"/>
+    <circle cx="285" cy="252" r="28" fill="#4a4743"/><circle cx="285" cy="252" r="12" fill="#cfcac3"/>
+  </g>
+</svg>

@@ -1,0 +1,80 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 420 230" role="img" aria-labelledby="t">
+  <title id="t">Twee kleine olifantjes, elk met een ballon</title>
+  <style>
+    .balloon { animation: float 4s ease-in-out infinite; animation-delay: var(--delay, 0s); transform-origin: 196px 120px; }
+    .balloon-fill { fill: var(--balloon, #e3a28c); }
+    .balloon-knot { fill: var(--knot, #d48f78); }
+    .ear-inner { fill: var(--ear, #f2c9c4); }
+    .twinkle { animation: twinkle 3s ease-in-out infinite; }
+    .twinkle.b { animation-delay: 1.5s; }
+    .heart { animation: beat 2.4s ease-in-out infinite; transform-origin: 210px 44px; }
+    @keyframes float { 0%, 100% { transform: rotate(-3deg) translateY(0); } 50% { transform: rotate(3deg) translateY(-4px); } }
+    @keyframes twinkle { 0%, 100% { opacity: .35; } 50% { opacity: 1; } }
+    @keyframes beat { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.12); } }
+    @media (prefers-reduced-motion: reduce) { .balloon, .twinkle, .heart { animation: none; } }
+  </style>
+
+  <defs>
+    <!-- One baby elephant holding a balloon on its right; drawn once, used twice. -->
+    <g id="elephant">
+      <g class="balloon">
+        <path d="M156 127 C 172 112, 182 96, 196 76" fill="none" stroke="#9a8f86" stroke-width="1.6" stroke-linecap="round"/>
+        <ellipse class="balloon-fill" cx="200" cy="48" rx="25" ry="30"/>
+        <path class="balloon-knot" d="M195 77 l5 -3 5 3 -5 3z"/>
+        <ellipse cx="191" cy="36" rx="6" ry="9" fill="#fff" opacity=".45" transform="rotate(-20 191 36)"/>
+      </g>
+
+      <!-- body + feet -->
+      <ellipse cx="122" cy="170" rx="50" ry="36" fill="#b6c4d6"/>
+      <ellipse cx="96" cy="198" rx="17" ry="11" fill="#c6d2e1"/>
+      <ellipse cx="148" cy="198" rx="17" ry="11" fill="#c6d2e1"/>
+      <g fill="#eef2f7">
+        <circle cx="89" cy="203" r="2.6"/><circle cx="96" cy="204.5" r="2.6"/><circle cx="103" cy="203" r="2.6"/>
+        <circle cx="141" cy="203" r="2.6"/><circle cx="148" cy="204.5" r="2.6"/><circle cx="155" cy="203" r="2.6"/>
+      </g>
+      <ellipse cx="122" cy="176" rx="26" ry="20" fill="#c9d4e2"/>
+
+      <!-- ears -->
+      <ellipse cx="74" cy="104" rx="33" ry="38" fill="#a8b8cc" transform="rotate(-12 74 104)"/>
+      <ellipse class="ear-inner" cx="76" cy="106" rx="21" ry="26" transform="rotate(-12 76 106)"/>
+      <ellipse cx="170" cy="104" rx="33" ry="38" fill="#a8b8cc" transform="rotate(12 170 104)"/>
+      <ellipse class="ear-inner" cx="168" cy="106" rx="21" ry="26" transform="rotate(12 168 106)"/>
+
+      <!-- head + tuft -->
+      <circle cx="122" cy="104" r="46" fill="#b6c4d6"/>
+      <path d="M116 60 c-2 -9 6 -13 9 -7 c2 -7 11 -4 8 3" fill="none" stroke="#9fb0c6" stroke-width="3" stroke-linecap="round"/>
+
+      <!-- trunk, curling up to hold the balloon string -->
+      <path d="M122 120 C 120 146, 134 158, 150 144 C 156 139, 158 132, 155 127" fill="none" stroke="#97a9c0" stroke-width="18" stroke-linecap="round"/>
+      <path d="M122 120 C 120 146, 134 158, 150 144 C 156 139, 158 132, 155 127" fill="none" stroke="#bfcbdb" stroke-width="13" stroke-linecap="round"/>
+      <circle cx="155" cy="127" r="3" fill="#97a9c0" opacity=".5"/>
+      <path d="M117 131 q5 2 10 0 M119 140 q5 2 10 0" fill="none" stroke="#a3b3c8" stroke-width="1.8" stroke-linecap="round"/>
+
+      <!-- sleepy happy eyes + cheeks -->
+      <path d="M100 100 q7 7 14 0" fill="none" stroke="#4a4540" stroke-width="3" stroke-linecap="round"/>
+      <path d="M130 100 q7 7 14 0" fill="none" stroke="#4a4540" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="98" cy="114" r="7" fill="#f2b8b0" opacity=".65"/>
+      <circle cx="146" cy="114" r="7" fill="#f2b8b0" opacity=".65"/>
+    </g>
+  </defs>
+
+  <!-- shared shadow -->
+  <ellipse cx="210" cy="206" rx="160" ry="11" fill="#e9dccf"/>
+
+  <!-- sparkles -->
+  <path d="M14 140 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#b9cdb6" class="twinkle"/>
+  <circle cx="98" cy="30" r="4.5" fill="#f2c9b8" class="twinkle b"/>
+  <circle cx="324" cy="26" r="4" fill="#b9cdb6" class="twinkle"/>
+  <path d="M404 150 l3 7 7 3 -7 3 -3 7 -3 -7 -7 -3 7 -3z" fill="#f2c9b8" class="twinkle b"/>
+
+  <!-- left twin: mirrored, balloon on the outside left (peach) -->
+  <use href="#elephant" xlink:href="#elephant" transform="translate(252 0) scale(-1 1)"
+       style="--balloon:#e3a28c; --knot:#d48f78; --ear:#f2c9c4"/>
+
+  <!-- right twin: balloon on the outside right (sage), slightly out of step -->
+  <use href="#elephant" xlink:href="#elephant" transform="translate(168 0)"
+       style="--balloon:#a9c2a6; --knot:#93ad90; --ear:#f5d6c6; --delay:-2s"/>
+
+  <!-- little heart between the twins -->
+  <path class="heart" d="M210 50 c-5 -8 -16 -3 -11 5 l11 10 11 -10 c5 -8 -6 -13 -11 -5z" fill="#e8a7a0"/>
+</svg>

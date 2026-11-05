@@ -1,0 +1,53 @@
+[
+  {
+    "id": "kinderwagen",
+    "name": "Kinderwagen",
+    "description": "Een stevige combi-kinderwagen voor lange wandelingen.",
+    "price": 649.00,
+    "images": [
+      "images/cadeaus/kinderwagen-groen.svg",
+      "images/cadeaus/kinderwagen-perzik.svg",
+      "images/cadeaus/kinderwagen-dekentje.svg"
+    ],
+    "link": "",
+    "category": "Op stap"
+  },
+  {
+    "id": "autostoel",
+    "name": "Autostoeltje (groep 0+)",
+    "description": "Veilig onderweg vanaf de eerste rit naar huis.",
+    "price": 249.95,
+    "images": [],
+    "link": "",
+    "category": "Op stap"
+  },
+  {
+    "id": "badje",
+    "name": "Badje met standaard",
+    "description": "",
+    "price": 45.00,
+    "images": [],
+    "link": "",
+    "category": "Verzorging",
+    "allowPartial": false
+  },
+  {
+    "id": "slaapzak",
+    "name": "Slaapzak 0-6 maanden",
+    "description": "Zomer- of wintergewicht, kleur maakt niet uit.",
+    "price": 39.99,
+    "images": [],
+    "link": "",
+    "category": "Slapen",
+    "allowPartial": false
+  },
+  {
+    "id": "spaarpot",
+    "name": "Spaarpotje",
+    "description": "Een bijdrage voor later. Elk bedrag is welkom!",
+    "price": 1000.00,
+    "images": [],
+    "link": "",
+    "category": "Extra"
+  }
+]

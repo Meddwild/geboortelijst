@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 120" aria-hidden="true">
+  <!-- Dotted travel route with a loop, ending in a paper plane -->
+  <path d="M6 108 C 40 100, 52 70, 82 72 C 112 74, 108 104, 90 100 C 72 96, 84 54, 120 44 C 146 37, 160 34, 172 26"
+        fill="none" stroke="#c9a77f" stroke-width="2.5" stroke-dasharray="2 7" stroke-linecap="round"/>
+  <circle cx="6" cy="108" r="4" fill="#f4a993"/>
+  <g transform="translate(176 22) rotate(-28)">
+    <path d="M-16 -9 L 14 0 L -16 9 L -10 0Z" fill="#fffdf7" stroke="#8a9a7c" stroke-width="1.6" stroke-linejoin="round"/>
+    <path d="M-10 0 L 14 0 L -12 5Z" fill="#e3eed8" stroke="#8a9a7c" stroke-width="1.2" stroke-linejoin="round"/>
+  </g>
+</svg>

@@ -1,0 +1,368 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Geboortelijst beheer</title>
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body class="admin">
+  <main class="container">
+    <header class="admin-header">
+      <h1>Beheer</h1>
+      <p class="muted"><a class="link" href="/" target="_blank" rel="noopener">Bekijk de lijst ↗</a></p>
+    </header>
+
+    <form class="login" id="login">
+      <div class="field">
+        <label for="pw">Wachtwoord</label>
+        <input id="pw" type="password" autocomplete="current-password" required>
+      </div>
+      <p class="error" id="loginError" hidden></p>
+      <button class="btn primary" type="submit">Inloggen</button>
+    </form>
+
+    <div id="panel" hidden>
+      <div class="filters tabs" role="tablist">
+        <button type="button" class="chip active" role="tab" aria-selected="true" data-tab="gifts">Cadeaus</button>
+        <button type="button" class="chip" role="tab" aria-selected="false" data-tab="contributions">Bijdragen</button>
+      </div>
+
+      <!-- ---------- gifts ---------- -->
+      <section id="tab-gifts">
+        <div class="admin-grid">
+          <form class="panel-card gift-form" id="giftForm" novalidate>
+            <h2 id="giftFormTitle">Nieuw cadeau</h2>
+
+            <div class="field">
+              <label for="gName">Naam</label>
+              <input id="gName" name="name" maxlength="120" required>
+            </div>
+            <div class="field-row">
+              <div class="field">
+                <label for="gPrice">Prijs (€)</label>
+                <input id="gPrice" name="price" type="text" inputmode="decimal" placeholder="bv. 24,95" required>
+              </div>
+              <div class="field">
+                <label for="gCategory">Categorie <span class="muted">(optioneel)</span></label>
+                <input id="gCategory" name="category" maxlength="40" list="categoryList">
+                <datalist id="categoryList"></datalist>
+              </div>
+            </div>
+            <div class="field">
+              <label for="gDescription">Omschrijving <span class="muted">(optioneel)</span></label>
+              <textarea id="gDescription" name="description" rows="2" maxlength="1000"></textarea>
+            </div>
+            <div class="field">
+              <label>Afbeeldingen <span class="muted">(optioneel, de eerste is de hoofdafbeelding)</span></label>
+              <div class="image-list" id="imageList"></div>
+              <button class="btn add-image" type="button" id="addImage">+ Nog een afbeelding</button>
+              <small class="muted">Tip: rechtsklik op een productfoto in een webshop → "Afbeeldingsadres kopiëren" en plak het hier. Eigen foto's? Zet ze in de map <code>public/images</code> en vul bv. <code>images/cadeaus/foto.jpg</code> in.</small>
+            </div>
+            <div class="field">
+              <label for="gLink">Link naar product <span class="muted">(optioneel)</span></label>
+              <input id="gLink" name="link" type="url" placeholder="https://…">
+            </div>
+            <label class="check"><input type="checkbox" name="favorite"> <span>Favoriet <span class="heart">♥</span> <small class="muted">(gasten zien een badge en kunnen op favorieten filteren)</small></span></label>
+            <label class="check"><input type="checkbox" name="allowPartial" checked> Gasten mogen een deel bijdragen</label>
+            <label class="check"><input type="checkbox" name="contributeOnly"> <span>Enkel bijdragen <small class="muted">(gasten kunnen dit niet zelf volledig kopen, alleen geld bijdragen)</small></span></label>
+            <label class="check"><input type="checkbox" name="bought"> Markeer als volledig gekocht <small class="muted">(bv. iemand zei het je persoonlijk)</small></label>
+
+            <p class="error" id="giftError" role="alert" hidden></p>
+            <div class="form-actions">
+              <button class="btn primary" type="submit" id="giftSubmit">Toevoegen</button>
+              <button class="btn" type="button" id="giftCancel" hidden>Annuleren</button>
+            </div>
+          </form>
+
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th></th><th>Cadeau</th><th>Prijs</th><th>Stand</th><th></th></tr></thead>
+              <tbody id="giftRows"></tbody>
+            </table>
+          </div>
+        </div>
+      </section>
+
+      <!-- ---------- contributions ---------- -->
+      <section id="tab-contributions" hidden>
+        <div class="summary" id="summary"></div>
+        <p><button class="btn" type="button" id="backupBtn" style="width:auto">Download back-up (cadeaus + bijdragen)</button></p>
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr><th>Datum</th><th>Referentie</th><th>Cadeau</th><th>Naam</th><th>Bedrag</th><th>Type</th><th>Bericht</th><th>Betaald</th><th></th></tr>
+            </thead>
+            <tbody id="rows"></tbody>
+          </table>
+        </div>
+        <p class="muted small" style="margin-top:16px">Tip: zoek de referentie in de mededeling van je bankafschrift en vink "Betaald" aan. Komt een betaling niet, verwijder de bijdrage dan: het bedrag komt meteen weer vrij op de lijst.</p>
+      </section>
+    </div>
+  </main>
+
+  <script>
+    const $ = (id) => document.getElementById(id);
+    const euro = (n) => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }).format(n);
+    const esc = (s) => String(s ?? '').replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    const state = { gifts: [], editing: null };
+    let password = '';
+    try { password = sessionStorage.getItem('pw') || ''; } catch { /* storage blocked */ }
+
+    async function api(path, options = {}) {
+      const res = await fetch(path, { ...options, headers: { 'Content-Type': 'application/json', 'x-admin-password': password } });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error || 'Er ging iets mis.');
+      return data;
+    }
+
+    async function refresh() {
+      const [gifts, contributions] = await Promise.all([api('/api/admin/gifts'), api('/api/admin/contributions')]);
+      $('login').hidden = true;
+      $('panel').hidden = false;
+      state.gifts = gifts;
+      renderGifts();
+      renderContributions(contributions);
+    }
+
+    // ---------- gifts ----------
+
+    function renderGifts() {
+      $('categoryList').innerHTML = [...new Set(state.gifts.map((g) => g.category).filter(Boolean))]
+        .map((c) => `<option value="${esc(c)}">`).join('');
+
+      $('giftRows').innerHTML = state.gifts.map((g) => `
+        <tr class="${state.editing === String(g.id) ? 'editing' : ''}">
+          <td class="thumb">${giftImages(g).length
+            ? `<img src="${esc(giftImages(g)[0])}" alt="" loading="lazy">${giftImages(g).length > 1 ? `<small class="img-count">+${giftImages(g).length - 1}</small>` : ''}`
+            : '<span aria-hidden="true">🎁</span>'}</td>
+          <td>
+            <strong>${esc(g.name)}</strong>${g.favorite ? ' <span class="heart" title="Favoriet">♥</span>' : ''}
+            ${g.category ? `<br><span class="muted small">${esc(g.category)}</span>` : ''}
+            ${g.contributeOnly ? '<br><span class="badge-inline">enkel bijdragen</span>' : ''}
+          </td>
+          <td>${euro(g.price)}${g.allowPartial === false ? '<br><span class="muted small">niet deelbaar</span>' : ''}</td>
+          <td>${g.bought || g.taken >= g.price ? '<span class="badge-inline done">Gekocht</span>' : `${euro(g.taken)}${g.contributors ? `<br><span class="muted small">${g.contributors} gever(s)</span>` : ''}`}</td>
+          <td class="actions">
+            <button class="btn" type="button" data-edit="${esc(g.id)}">Bewerken</button>
+            <button class="btn danger" type="button" data-remove="${esc(g.id)}">Verwijderen</button>
+          </td>
+        </tr>`).join('') || '<tr><td colspan="5" class="muted">Nog geen cadeaus. Voeg er links een toe.</td></tr>';
+    }
+
+    function fillForm(gift) {
+      const f = $('giftForm');
+      state.editing = gift ? String(gift.id) : null;
+      f.reset();
+      $('giftError').hidden = true;
+      $('giftFormTitle').textContent = gift ? `Bewerk: ${gift.name}` : 'Nieuw cadeau';
+      $('giftSubmit').textContent = gift ? 'Opslaan' : 'Toevoegen';
+      $('giftCancel').hidden = !gift;
+      if (gift) {
+        f.elements.name.value = gift.name || '';
+        f.elements.price.value = gift.price != null ? String(gift.price).replace('.', ',') : '';
+        f.elements.category.value = gift.category || '';
+        f.elements.description.value = gift.description || '';
+        f.elements.link.value = gift.link || '';
+        f.elements.allowPartial.checked = gift.allowPartial !== false;
+        f.elements.bought.checked = gift.bought === true;
+        f.elements.favorite.checked = gift.favorite === true;
+        f.elements.contributeOnly.checked = gift.contributeOnly === true;
+      }
+      setImages(gift ? giftImages(gift) : []);
+      renderGifts();
+    }
+
+    // ---------- image list (one link per row, with preview) ----------
+
+    const giftImages = (g) => (Array.isArray(g.images) ? g.images : g.image ? [g.image] : []).filter(Boolean);
+
+    function addImageRow(url = '', focus = false) {
+      const row = document.createElement('div');
+      row.className = 'image-row';
+      row.innerHTML = `
+        <div class="image-thumb"><img alt=""></div>
+        <input class="image-url" type="text" inputmode="url" spellcheck="false" placeholder="https://…/foto.jpg of images/foto.jpg" aria-label="Link of bestandsnaam van de afbeelding">
+        <div class="image-actions">
+          <button type="button" class="icon-btn" data-img="up" aria-label="Naar boven" title="Naar boven">↑</button>
+          <button type="button" class="icon-btn" data-img="down" aria-label="Naar beneden" title="Naar beneden">↓</button>
+          <button type="button" class="icon-btn danger" data-img="remove" aria-label="Verwijderen" title="Verwijderen">×</button>
+        </div>`;
+      const input = row.querySelector('input');
+      const img = row.querySelector('img');
+      const preview = () => {
+        const src = input.value.trim();
+        row.classList.remove('broken');
+        row.classList.toggle('no-image', !src);
+        if (src) img.src = src; else img.removeAttribute('src');
+      };
+      img.addEventListener('error', () => { if (input.value.trim()) row.classList.add('broken'); });
+      input.addEventListener('input', preview);
+      input.value = url;
+      preview();
+      $('imageList').append(row);
+      if (focus) input.focus();
+    }
+
+    function setImages(urls) {
+      $('imageList').innerHTML = '';
+      (urls.length ? urls : ['']).forEach((u) => addImageRow(u));
+    }
+
+    const collectImages = () => [...$('imageList').querySelectorAll('.image-url')].map((i) => i.value.trim()).filter(Boolean);
+
+    setImages([]);
+    $('addImage').addEventListener('click', () => addImageRow('', true));
+    $('imageList').addEventListener('click', (e) => {
+      const btn = e.target.closest('[data-img]');
+      if (!btn) return;
+      const row = btn.closest('.image-row');
+      if (btn.dataset.img === 'up' && row.previousElementSibling) row.previousElementSibling.before(row);
+      if (btn.dataset.img === 'down' && row.nextElementSibling) row.nextElementSibling.after(row);
+      if (btn.dataset.img === 'remove') {
+        row.remove();
+        if (!$('imageList').children.length) addImageRow();
+      }
+    });
+
+    $('giftCancel').addEventListener('click', () => fillForm(null));
+
+    $('giftForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const f = e.target.elements;
+      const body = {
+        name: f.name.value,
+        price: Number(f.price.value.trim().replace(/\s|€/g, '').replace(',', '.')),
+        category: f.category.value,
+        description: f.description.value,
+        images: collectImages(),
+        link: f.link.value,
+        allowPartial: f.allowPartial.checked,
+        bought: f.bought.checked,
+        favorite: f.favorite.checked,
+        contributeOnly: f.contributeOnly.checked,
+      };
+      $('giftSubmit').disabled = true;
+      try {
+        if (state.editing) {
+          await api(`/api/admin/gifts/${encodeURIComponent(state.editing)}`, { method: 'PUT', body: JSON.stringify(body) });
+        } else {
+          await api('/api/admin/gifts', { method: 'POST', body: JSON.stringify(body) });
+        }
+        fillForm(null);
+        await refresh();
+      } catch (err) {
+        $('giftError').textContent = err.message;
+        $('giftError').hidden = false;
+      } finally {
+        $('giftSubmit').disabled = false;
+      }
+    });
+
+    // ---------- contributions ----------
+
+    function renderContributions(list) {
+      list.sort((a, b) => b.createdAt.localeCompare(a.createdAt));
+      const transfers = list.filter((c) => c.method === 'transfer');
+      const sum = (arr) => arr.reduce((s, c) => s + c.amountCents, 0) / 100;
+      $('summary').innerHTML = `
+        <div class="stat"><span class="muted small">Toegezegd via overschrijving</span><strong>${euro(sum(transfers))}</strong></div>
+        <div class="stat"><span class="muted small">Ontvangen (aangevinkt)</span><strong>${euro(sum(transfers.filter((c) => c.paid)))}</strong></div>
+        <div class="stat"><span class="muted small">Zelf gekocht</span><strong>${list.length - transfers.length}</strong></div>`;
+
+      $('rows').innerHTML = list.map((c) => `
+        <tr>
+          <td>${new Date(c.createdAt).toLocaleString('nl-BE')}</td>
+          <td><strong>${esc(c.reference)}</strong></td>
+          <td>${esc(c.giftName)}</td>
+          <td>${esc(c.name)}</td>
+          <td>${euro(c.amountCents / 100)}${c.overflow ? '<br><span class="badge-inline warn" title="Betaald nadat het cadeau al (bijna) volledig gekocht was: er is meer binnengekomen dan nodig.">⚠ te veel</span>' : ''}</td>
+          <td>${c.method === 'self' ? 'Zelf gekocht' : 'Overschrijving'}</td>
+          <td>${esc(c.message)}</td>
+          <td>${c.method === 'self' ? '—' : `<input type="checkbox" aria-label="Betaald" data-paid="${esc(c.id)}" ${c.paid ? 'checked' : ''}>`}</td>
+          <td><button class="btn danger" type="button" data-delete="${esc(c.id)}">Verwijderen</button></td>
+        </tr>`).join('') || '<tr><td colspan="9" class="muted">Nog geen bijdragen.</td></tr>';
+    }
+
+    $('backupBtn').addEventListener('click', async () => {
+      const [gifts, contributions] = await Promise.all([api('/api/admin/gifts'), api('/api/admin/contributions')]);
+      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), gifts, contributions }, null, 2)], { type: 'application/json' });
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = `geboortelijst-backup-${new Date().toISOString().slice(0, 10)}.json`;
+      a.click();
+      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    });
+
+    // ---------- shared ----------
+
+    function connectLive() {
+      const events = new EventSource('/api/events');
+      events.onmessage = () => refresh().catch(() => {});
+    }
+
+    $('login').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      password = $('pw').value;
+      try {
+        await refresh();
+        try { sessionStorage.setItem('pw', password); } catch { /* storage blocked */ }
+        connectLive();
+      } catch (err) {
+        $('loginError').textContent = err.message;
+        $('loginError').hidden = false;
+      }
+    });
+
+    document.addEventListener('change', async (e) => {
+      const id = e.target.dataset.paid;
+      if (id) await api(`/api/admin/contributions/${id}`, { method: 'PATCH', body: JSON.stringify({ paid: e.target.checked }) }).then(refresh);
+    });
+
+    document.addEventListener('click', async (e) => {
+      const tab = e.target.closest('[data-tab]');
+      if (tab) {
+        document.querySelectorAll('[data-tab]').forEach((b) => {
+          const active = b === tab;
+          b.classList.toggle('active', active);
+          b.setAttribute('aria-selected', active);
+          $(`tab-${b.dataset.tab}`).hidden = !active;
+        });
+        return;
+      }
+
+      const edit = e.target.closest('[data-edit]');
+      if (edit) {
+        fillForm(state.gifts.find((g) => String(g.id) === edit.dataset.edit));
+        $('giftForm').scrollIntoView({ behavior: 'smooth', block: 'start' });
+        return;
+      }
+
+      const remove = e.target.closest('[data-remove]');
+      if (remove) {
+        const gift = state.gifts.find((g) => String(g.id) === remove.dataset.remove);
+        if (!confirm(`"${gift.name}" van de lijst verwijderen?`)) return;
+        try {
+          await api(`/api/admin/gifts/${encodeURIComponent(gift.id)}`, { method: 'DELETE' });
+          if (state.editing === String(gift.id)) fillForm(null);
+          await refresh();
+        } catch (err) {
+          alert(err.message);
+        }
+        return;
+      }
+
+      const del = e.target.closest('[data-delete]');
+      if (del && confirm('Deze bijdrage verwijderen? Het bedrag komt dan weer vrij op de lijst.')) {
+        await api(`/api/admin/contributions/${del.dataset.delete}`, { method: 'DELETE' }).then(refresh);
+      }
+    });
+
+    if (password) {
+      refresh().then(connectLive).catch(() => { try { sessionStorage.removeItem('pw'); } catch {} });
+    }
+  </script>
+</body>
+</html>

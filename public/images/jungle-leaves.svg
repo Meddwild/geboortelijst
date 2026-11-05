@@ -1,0 +1,40 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 300 260" aria-hidden="true">
+  <!-- Corner cluster of soft jungle leaves with two hanging vines (anchored top-left). -->
+  <defs>
+    <path id="leaf" d="M0 0 C 25 -22, 85 -24, 120 0 C 85 24, 25 22, 0 0Z"/>
+    <path id="vein" d="M6 0 H 110" fill="none" stroke-linecap="round"/>
+    <g id="flower">
+      <circle cx="0" cy="-7" r="6"/><circle cx="6.7" cy="-2.2" r="6"/><circle cx="4.1" cy="5.7" r="6"/>
+      <circle cx="-4.1" cy="5.7" r="6"/><circle cx="-6.7" cy="-2.2" r="6"/>
+    </g>
+  </defs>
+
+  <!-- vines -->
+  <g fill="none" stroke="#7aa067" stroke-width="3" stroke-linecap="round">
+    <path d="M152 0 C 146 40, 166 72, 151 112 C 141 138, 151 160, 166 166 C 174 169, 178 162, 172 157"/>
+    <path d="M222 0 C 226 26, 214 48, 222 74 C 226 86, 220 94, 213 92"/>
+  </g>
+  <g fill="#8fb879">
+    <use href="#leaf" xlink:href="#leaf" transform="translate(148 30) rotate(155) scale(.32)"/>
+    <use href="#leaf" xlink:href="#leaf" transform="translate(158 62) rotate(25) scale(.32)"/>
+    <use href="#leaf" xlink:href="#leaf" transform="translate(153 98) rotate(160) scale(.3)"/>
+    <use href="#leaf" xlink:href="#leaf" transform="translate(146 134) rotate(30) scale(.28)"/>
+    <use href="#leaf" xlink:href="#leaf" transform="translate(222 24) rotate(20) scale(.28)"/>
+    <use href="#leaf" xlink:href="#leaf" transform="translate(218 56) rotate(160) scale(.26)"/>
+  </g>
+
+  <!-- big leaves fanning out from the corner -->
+  <g transform="translate(-14 -12)">
+    <g transform="rotate(8) scale(1.55)"><use href="#leaf" xlink:href="#leaf" fill="#9cc287"/><use href="#vein" xlink:href="#vein" stroke="#7ea86b" stroke-width="2"/></g>
+    <g transform="rotate(30) scale(1.9)"><use href="#leaf" xlink:href="#leaf" fill="#6f9d5f"/><use href="#vein" xlink:href="#vein" stroke="#5a8a4c" stroke-width="1.8"/></g>
+    <g transform="rotate(52) scale(1.6)"><use href="#leaf" xlink:href="#leaf" fill="#86b373"/><use href="#vein" xlink:href="#vein" stroke="#6c9a5b" stroke-width="2"/></g>
+    <g transform="rotate(76) scale(1.3)"><use href="#leaf" xlink:href="#leaf" fill="#a9cd93"/><use href="#vein" xlink:href="#vein" stroke="#8ab676" stroke-width="2.2"/></g>
+    <g transform="rotate(-6) scale(1.05)"><use href="#leaf" xlink:href="#leaf" fill="#5f8f52"/><use href="#vein" xlink:href="#vein" stroke="#4d7a42" stroke-width="2.4"/></g>
+    <g transform="rotate(92) scale(.9)"><use href="#leaf" xlink:href="#leaf" fill="#7aa86a"/><use href="#vein" xlink:href="#vein" stroke="#5f8f52" stroke-width="2.6"/></g>
+  </g>
+
+  <!-- little flowers for a soft touch -->
+  <g transform="translate(118 58)"><use href="#flower" xlink:href="#flower" fill="#f4a993"/><circle r="3.5" fill="#f7d77a"/></g>
+  <g transform="translate(64 128) scale(.8)"><use href="#flower" xlink:href="#flower" fill="#f6c2b0"/><circle r="3.5" fill="#f7d77a"/></g>
+  <g transform="translate(172 166) scale(.6)"><use href="#flower" xlink:href="#flower" fill="#f4a993"/><circle r="3.5" fill="#f7d77a"/></g>
+</svg>

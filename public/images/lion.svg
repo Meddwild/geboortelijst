@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 180 180" role="img" aria-label="Een leeuwenwelpje">
+  <style>
+    .tail { animation: wag 3s ease-in-out infinite; transform-origin: 122px 148px; }
+    @keyframes wag { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-12deg); } }
+    @media (prefers-reduced-motion: reduce) { .tail { animation: none; } }
+  </style>
+
+  <!-- tail -->
+  <g class="tail">
+    <path d="M122 148 C 150 150, 160 124, 150 110" fill="none" stroke="#f1bd73" stroke-width="7" stroke-linecap="round"/>
+    <ellipse cx="149" cy="104" rx="9" ry="11" fill="#e48f55" transform="rotate(20 149 104)"/>
+  </g>
+
+  <!-- body + paws -->
+  <ellipse cx="88" cy="140" rx="42" ry="32" fill="#f4c47e"/>
+  <ellipse cx="88" cy="148" rx="22" ry="18" fill="#fbe0b4"/>
+  <ellipse cx="66" cy="168" rx="15" ry="10" fill="#f6cd8f"/>
+  <ellipse cx="110" cy="168" rx="15" ry="10" fill="#f6cd8f"/>
+  <g fill="#e9b678">
+    <circle cx="60" cy="172" r="2.2"/><circle cx="66" cy="174" r="2.2"/><circle cx="72" cy="172" r="2.2"/>
+    <circle cx="104" cy="172" r="2.2"/><circle cx="110" cy="174" r="2.2"/><circle cx="116" cy="172" r="2.2"/>
+  </g>
+
+  <!-- fluffy mane -->
+  <g fill="#e8955a">
+    <circle cx="88" cy="70" r="46"/>
+    <circle cx="88" cy="22" r="13"/><circle cx="114" cy="29" r="13"/><circle cx="131" cy="48" r="13"/>
+    <circle cx="137" cy="72" r="13"/><circle cx="131" cy="96" r="13"/><circle cx="114" cy="113" r="13"/>
+    <circle cx="88" cy="119" r="13"/><circle cx="62" cy="113" r="13"/><circle cx="45" cy="96" r="13"/>
+    <circle cx="39" cy="72" r="13"/><circle cx="45" cy="48" r="13"/><circle cx="62" cy="29" r="13"/>
+  </g>
+  <circle cx="88" cy="70" r="40" fill="#efa765"/>
+
+  <!-- ears -->
+  <circle cx="60" cy="40" r="12" fill="#f6cd8f"/><circle cx="60" cy="40" r="6" fill="#f2b8a8"/>
+  <circle cx="116" cy="40" r="12" fill="#f6cd8f"/><circle cx="116" cy="40" r="6" fill="#f2b8a8"/>
+
+  <!-- face -->
+  <circle cx="88" cy="72" r="33" fill="#f7cf8d"/>
+  <ellipse cx="88" cy="86" rx="17" ry="12" fill="#fde9c7"/>
+  <path d="M82 79 h12 l-6 6z" fill="#b5735a" stroke="#b5735a" stroke-width="2" stroke-linejoin="round"/>
+  <path d="M88 85 v4 M88 89 q-5 5 -9 1 M88 89 q5 5 9 1" fill="none" stroke="#b5735a" stroke-width="2" stroke-linecap="round"/>
+  <g fill="#d9a774"><circle cx="78" cy="88" r="1.3"/><circle cx="75" cy="84" r="1.3"/><circle cx="98" cy="88" r="1.3"/><circle cx="101" cy="84" r="1.3"/></g>
+
+  <!-- sleepy happy eyes + cheeks -->
+  <path d="M68 68 q6 6 12 0" fill="none" stroke="#4a4540" stroke-width="3" stroke-linecap="round"/>
+  <path d="M96 68 q6 6 12 0" fill="none" stroke="#4a4540" stroke-width="3" stroke-linecap="round"/>
+  <circle cx="66" cy="81" r="6" fill="#f2a9a0" opacity=".55"/>
+  <circle cx="110" cy="81" r="6" fill="#f2a9a0" opacity=".55"/>
+</svg>

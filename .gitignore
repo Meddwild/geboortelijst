@@ -1,0 +1,4 @@
+# Live data: lives on the Railway volume, never in git
+data/
+node_modules/
+*.tmp

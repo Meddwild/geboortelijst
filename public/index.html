@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="nl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Geboortelijst</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600&family=Nunito:wght@400;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+</head>
+<body>
+  <header class="hero" id="hero">
+    <!-- decoration -->
+    <img class="deco deco-leaves-left" src="images/jungle-leaves.svg" alt="" aria-hidden="true">
+    <img class="deco deco-leaves-right" src="images/jungle-leaves.svg" alt="" aria-hidden="true">
+    <img class="deco deco-balloon" src="images/hot-air-balloon.svg" alt="" aria-hidden="true">
+    <img class="deco deco-route" src="images/route-plane.svg" alt="" aria-hidden="true">
+    <img class="deco deco-giraffe" src="images/giraffe.svg" alt="" aria-hidden="true">
+    <img class="deco deco-lion" src="images/lion.svg" alt="" aria-hidden="true">
+
+    <div class="hero-inner">
+      <img class="hero-art" id="heroArt" src="images/olifantje.svg" alt="" width="420" height="230">
+      <p class="eyebrow">Geboortelijst · ons grootste avontuur</p>
+      <h1 id="title">…</h1>
+      <p class="subtitle" id="subtitle"></p>
+      <p class="intro" id="intro"></p>
+    </div>
+
+    <svg class="hero-wave" viewBox="0 0 1440 80" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M0 40 C 200 10, 380 70, 620 42 S 1060 6, 1260 38 S 1400 50, 1440 36 V80 H0Z" fill="var(--grass)"/>
+      <path d="M0 58 C 240 34, 460 84, 720 56 S 1180 30, 1440 60 V80 H0Z" fill="var(--bg)"/>
+    </svg>
+  </header>
+
+  <main class="container">
+    <div class="toolbar">
+      <div class="filters" id="filters" role="tablist" aria-label="Categorieën"></div>
+      <div class="toggles">
+        <label class="toggle toggle-fav" id="favToggle" hidden>
+          <input type="checkbox" id="onlyFavorites">
+          <span>Toon enkel onze favorieten <span class="heart" aria-hidden="true">♥</span></span>
+        </label>
+        <label class="toggle">
+          <input type="checkbox" id="hideComplete">
+          <span>Verberg gekochte cadeaus</span>
+        </label>
+      </div>
+    </div>
+    <div id="grid" aria-live="polite"></div>
+    <p class="empty" id="empty" hidden>Geen cadeaus gevonden.</p>
+  </main>
+
+  <footer class="footer">
+    <img src="images/jungle-leaves.svg" alt="" aria-hidden="true" class="footer-leaf">
+    <p>Op naar ons grootste avontuur · bedankt om aan ons te denken 💛</p>
+  </footer>
+
+  <dialog id="dialog" class="dialog">
+    <button class="close" type="button" aria-label="Sluiten" data-close>&times;</button>
+
+    <!-- Step 1: choose amount -->
+    <form id="form" class="step" method="dialog" novalidate>
+      <div class="dlg-media" id="dlgMedia" hidden></div>
+      <h2 id="dlgTitle"></h2>
+      <p class="muted" id="dlgRemaining"></p>
+      <p class="note" id="dlgNote" hidden></p>
+
+      <fieldset class="methods" id="methods">
+        <legend>Hoe wil je dit cadeau geven?</legend>
+        <label class="method">
+          <input type="radio" name="method" value="transfer" checked>
+          <span><strong>Bijdragen via overschrijving</strong><small>Betaal met je bankapp via een QR-code</small></span>
+        </label>
+        <label class="method" id="methodSelf">
+          <input type="radio" name="method" value="self">
+          <span><strong>Ik koop het zelf</strong><small>Je koopt het volledige cadeau in de winkel</small></span>
+        </label>
+      </fieldset>
+
+      <div class="field" id="amountField">
+        <label for="amount">Bedrag</label>
+        <div class="amount-row">
+          <span class="prefix">€</span>
+          <input id="amount" name="amount" type="number" inputmode="decimal" min="1" step="0.01" required>
+          <button type="button" class="chip" id="fullAmount">Volledig bedrag</button>
+        </div>
+        <div class="quick" id="quickAmounts"></div>
+      </div>
+
+      <div class="field">
+        <label for="name">Je naam</label>
+        <input id="name" name="name" type="text" autocomplete="name" maxlength="80" required>
+      </div>
+      <div class="field">
+        <label for="message">Berichtje <span class="muted">(optioneel)</span></label>
+        <textarea id="message" name="message" rows="2" maxlength="500"></textarea>
+      </div>
+
+      <p class="error" id="formError" role="alert" hidden></p>
+      <button class="btn primary" type="submit" id="submitBtn">Verder</button>
+    </form>
+
+    <!-- Step 2: pay / confirm. Nothing is saved until the guest confirms here. -->
+    <section id="pay" class="step" hidden>
+      <h2 id="payTitle"></h2>
+      <p class="note warn" id="payWarning" role="alert" hidden></p>
+      <div id="payBlock">
+        <p>Scan de QR-code met je bankapp om <strong id="payAmount"></strong> over te schrijven.</p>
+        <div class="qr" id="qr"></div>
+        <dl class="bank">
+          <dt>Begunstigde</dt><dd id="payName"></dd>
+          <dt>IBAN</dt><dd><span id="payIban"></span> <button class="copy" type="button" data-copy="payIban">kopieer</button></dd>
+          <dt>Bedrag</dt><dd id="payAmount2"></dd>
+          <dt>Mededeling</dt><dd><span id="payRef"></span> <button class="copy" type="button" data-copy="payRef">kopieer</button></dd>
+        </dl>
+        <p class="muted small">Vermeld zeker de mededeling, zo weten we van wie het cadeau komt. Klik na het betalen op <strong>Ik heb betaald</strong>: pas dan komt je bijdrage op de lijst.</p>
+      </div>
+      <div id="selfBlock" hidden>
+        <p id="selfText"></p>
+      </div>
+      <p class="error" id="payError" role="alert" hidden></p>
+      <div class="step-actions">
+        <button class="btn" type="button" id="payCancel">Annuleren</button>
+        <button class="btn primary" type="button" id="payConfirm">Ik heb betaald</button>
+      </div>
+    </section>
+
+    <!-- Step 3: thank you -->
+    <section id="done" class="step" hidden>
+      <h2>Dankjewel! 💛</h2>
+      <p id="doneText"></p>
+      <p class="note warn" id="doneWarning" hidden></p>
+      <button class="btn primary" type="button" data-close>Sluiten</button>
+    </section>
+  </dialog>
+
+  <script src="app.js"></script>
+</body>
+</html>
