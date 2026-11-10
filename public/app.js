@@ -1,7 +1,7 @@
 // Gift list front-end. Data comes from the Node server (/api/registry) and
 // refreshes live via Server-Sent Events whenever anyone contributes.
 
-const state = { config: {}, gifts: [], category: 'Alles', current: null, slides: {} };
+const state = { config: {}, gifts: [], category: 'Alles', current: null, slides: {}, expanded: new Set() };
 
 const $ = (id) => document.getElementById(id);
 const euro = (n) => new Intl.NumberFormat('nl-BE', { style: 'currency', currency: 'EUR' }).format(n);
@@ -104,34 +104,82 @@ function renderGrid() {
 
   $('empty').hidden = gifts.length > 0;
 
+  // Fully bought gifts leave their category and gather in one section at the bottom.
+  const open = gifts.filter((g) => !g.complete);
+  const bought = gifts.filter((g) => g.complete);
+
   // One section per category on "Alles"; a single category needs no heading
   // (its filter chip is already highlighted).
   const groups = new Map();
-  for (const g of gifts) {
+  for (const g of open) {
     const key = g.category || '';
     if (!groups.has(key)) groups.set(key, []);
     groups.get(key).push(g);
   }
   const grouped = state.category === 'Alles' && [...groups.keys()].some(Boolean);
+
+  let html;
   if (!grouped) {
-    $('grid').innerHTML = gifts.length ? `<div class="grid">${gifts.map(cardHtml).join('')}</div>` : '';
-    restoreCarousels($('grid'));
-    return;
+    html = open.length ? `<div class="grid">${open.map(cardHtml).join('')}</div>` : '';
+  } else {
+    // Gifts without a category go last, under "Overige".
+    const ordered = [...groups.entries()].sort(([a], [b]) => (a === '') - (b === ''));
+    html = ordered.map(([category, list], i) => sectionHtml(`cat-${i}`, escapeHtml(category || 'Overige'), list)).join('');
+  }
+  if (bought.length) {
+    html += sectionHtml('cat-bought', 'Al gekocht <span class="heart" aria-hidden="true">♥</span>', bought, 'is-bought');
   }
 
-  // Gifts without a category go last, under "Overige".
-  const ordered = [...groups.entries()].sort(([a], [b]) => (a === '') - (b === ''));
-  $('grid').innerHTML = ordered.map(([category, list], i) => `
-    <section class="category-section" aria-labelledby="cat-${i}">
+  $('grid').innerHTML = html;
+  restoreCarousels($('grid'));
+  updateClamps($('grid'));
+}
+
+function sectionHtml(id, titleHtml, list, extraClass = '') {
+  return `
+    <section class="category-section ${extraClass}" aria-labelledby="${id}">
       <header class="category-head">
-        <h2 id="cat-${i}">${escapeHtml(category || 'Overige')}</h2>
+        <h2 id="${id}">${titleHtml}</h2>
         <span class="muted small">${list.length} ${list.length === 1 ? 'cadeau' : 'cadeaus'}</span>
       </header>
       <div class="grid">${list.map(cardHtml).join('')}</div>
-    </section>`).join('');
-  restoreCarousels($('grid'));
+    </section>`;
 }
 
+// ---------- long descriptions: clamp to a few lines with "meer" / "minder" ----------
+
+function descriptionHtml(g) {
+  if (!g.description) return '';
+  const open = state.expanded.has(g.id);
+  return `
+    <div class="desc-wrap${open ? ' is-open' : ''}">
+      <p class="desc" id="desc-${escapeHtml(g.id)}">${escapeHtml(g.description)}</p>
+      <button type="button" class="more-btn" data-more="${escapeHtml(g.id)}" aria-controls="desc-${escapeHtml(g.id)}" aria-expanded="${open}" hidden>${open ? 'minder' : 'meer'}</button>
+    </div>`;
+}
+
+// Only show the toggle when the text really is cut off (depends on card width and font).
+function updateClamps(root) {
+  requestAnimationFrame(() => {
+    root.querySelectorAll('.desc-wrap').forEach((wrap) => {
+      const desc = wrap.querySelector('.desc');
+      const btn = wrap.querySelector('.more-btn');
+      if (wrap.classList.contains('is-open')) {
+        btn.hidden = false;
+        return;
+      }
+      btn.hidden = desc.scrollHeight <= desc.clientHeight + 1;
+    });
+  });
+}
+
+// Line wrapping changes once the web fonts arrive, and when the window is resized.
+document.fonts?.ready.then(() => updateClamps($('grid')));
+let resizeTimer;
+window.addEventListener('resize', () => {
+  clearTimeout(resizeTimer);
+  resizeTimer = setTimeout(() => updateClamps($('grid')), 150);
+});
 function cardHtml(g) {
   const pct = g.price ? Math.round((g.taken / g.price) * 100) : 0;
   const image = carouselHtml(g.images, `card-${g.id}`, g.name);
@@ -151,7 +199,7 @@ function cardHtml(g) {
       <div class="media">${image}${status}${favorite}</div>
       <div class="body">
         <h3>${escapeHtml(g.name)}</h3>
-        ${g.description ? `<p class="desc">${escapeHtml(g.description)}</p>` : ''}
+        ${descriptionHtml(g)}
         ${g.link ? `<a class="link" href="${escapeHtml(g.link)}" target="_blank" rel="noopener">Bekijk product ↗</a>` : ''}
         <div class="price-row">
           <span class="price">${euro(g.price)}</span>
@@ -445,6 +493,16 @@ document.addEventListener('click', async (e) => {
   }
   const dot = e.target.closest('[data-dot]');
   if (dot) return goToSlide(dot.closest('.carousel'), Number(dot.dataset.dot));
+
+  const more = e.target.closest('[data-more]');
+  if (more) {
+    const wrap = more.closest('.desc-wrap');
+    const open = wrap.classList.toggle('is-open');
+    more.textContent = open ? 'minder' : 'meer';
+    more.setAttribute('aria-expanded', open);
+    if (open) state.expanded.add(more.dataset.more); else state.expanded.delete(more.dataset.more);
+    return;
+  }
 
   const giftBtn = e.target.closest('[data-gift]');
   if (giftBtn) return openDialog(state.gifts.find((g) => g.id === giftBtn.dataset.gift));
