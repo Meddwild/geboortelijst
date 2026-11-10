@@ -162,12 +162,12 @@ function send(res, status, body) {
   res.end(isJson ? JSON.stringify(body) : body);
 }
 
-function readBody(req) {
+function readBody(req, limit = 10_000) {
   return new Promise((resolve, reject) => {
     let raw = '';
     req.on('data', (chunk) => {
       raw += chunk;
-      if (raw.length > 10_000) {
+      if (raw.length > limit) {
         reject(new Error('Body too large'));
         req.destroy();
       }
@@ -409,6 +409,89 @@ async function handleAdminGifts(req, res, pathname) {
 
 const pick = (obj, ...keys) => Object.fromEntries(keys.map((k) => [k, obj[k]]));
 
+// ---------- backup & restore (admin) ----------
+
+const BACKUP_DIR = path.join(DATA_DIR, 'backups');
+
+function snapshot() {
+  return { exportedAt: new Date().toISOString(), gifts: loadGifts(), contributions: loadContributions() };
+}
+
+// Validates a backup file (or a plain gifts.json list) and returns clean data or an error.
+function parseBackup(body) {
+  const rawGifts = Array.isArray(body) ? body : body.gifts;
+  const rawContributions = Array.isArray(body) ? null : body.contributions;
+  if (!Array.isArray(rawGifts)) return { error: 'Dit bestand bevat geen cadeaulijst. Kies een back-up van deze site of een gifts.json.' };
+
+  const gifts = [];
+  const ids = new Set();
+  for (const [i, raw] of rawGifts.entries()) {
+    if (!raw || typeof raw !== 'object') return { error: `Cadeau ${i + 1} in het bestand is ongeldig.` };
+    const { gift, error } = cleanGift(raw);
+    if (error) return { error: `Cadeau ${i + 1} ("${raw.name || '?'}"): ${error}` };
+    const id = raw.id && !ids.has(String(raw.id)) ? String(raw.id) : slugify(gift.name, ids);
+    ids.add(id);
+    const restored = { id, ...gift };
+    // keep contributions that were entered by hand in gifts.json
+    if (Array.isArray(raw.contributions)) {
+      restored.contributions = raw.contributions
+        .filter((c) => c && Number(c.amount) > 0)
+        .map((c) => ({ from: String(c.from || '').slice(0, 80), amount: Math.round(Number(c.amount) * 100) / 100 }));
+    }
+    dropFalseFlags(restored);
+    gifts.push(restored);
+  }
+
+  let contributions = null; // null = leave the current contributions untouched
+  if (Array.isArray(rawContributions)) {
+    contributions = [];
+    for (const [i, c] of rawContributions.entries()) {
+      const amountCents = Math.round(Number(c && c.amountCents));
+      if (!c || !c.giftId || !Number.isFinite(amountCents) || amountCents <= 0) {
+        return { error: `Bijdrage ${i + 1} in het bestand is ongeldig.` };
+      }
+      contributions.push({
+        id: /^[\w-]{8,}$/.test(String(c.id || '')) ? String(c.id) : crypto.randomUUID(),
+        reference: String(c.reference || newReference()).slice(0, 12),
+        ...(c.overflow ? { overflow: true } : {}),
+        giftId: String(c.giftId),
+        giftName: String(c.giftName || '').slice(0, 120),
+        name: String(c.name || '').slice(0, 80),
+        message: String(c.message || '').slice(0, 500),
+        method: c.method === 'self' ? 'self' : 'transfer',
+        amountCents,
+        paid: c.paid === true,
+        createdAt: Number.isNaN(Date.parse(c.createdAt)) ? new Date().toISOString() : String(c.createdAt),
+      });
+    }
+  }
+  return { gifts, contributions };
+}
+
+async function handleBackup(req, res, pathname) {
+  if (pathname === '/api/admin/backup' && req.method === 'GET') {
+    return send(res, 200, snapshot());
+  }
+  if (pathname === '/api/admin/restore' && req.method === 'POST') {
+    const parsed = parseBackup(await readBody(req, 5_000_000));
+    if (parsed.error) return send(res, 400, { error: parsed.error });
+
+    // Safety net: keep a copy of what is there now, in case the wrong file was chosen.
+    fs.mkdirSync(BACKUP_DIR, { recursive: true });
+    const safety = path.join(BACKUP_DIR, `voor-terugzetten-${new Date().toISOString().replace(/[:.]/g, '-')}.json`);
+    fs.writeFileSync(safety, JSON.stringify(snapshot(), null, 2));
+
+    if (parsed.contributions) saveContributions(parsed.contributions);
+    saveGifts(parsed.gifts);
+    return send(res, 200, {
+      gifts: parsed.gifts.length,
+      contributions: parsed.contributions ? parsed.contributions.length : null,
+      safetyCopy: path.basename(safety),
+    });
+  }
+  send(res, 404, { error: 'Not found' });
+}
+
 async function handleAdmin(req, res, pathname) {
   if (!isAdmin(req)) {
     return send(res, 401, { error: ADMIN_PASSWORD ? 'Onjuist wachtwoord.' : 'Beheer is uitgeschakeld: start de server met ADMIN_PASSWORD.' });
@@ -416,6 +499,9 @@ async function handleAdmin(req, res, pathname) {
 
   if (pathname === '/api/admin/gifts' || pathname.startsWith('/api/admin/gifts/')) {
     return handleAdminGifts(req, res, pathname);
+  }
+  if (pathname === '/api/admin/backup' || pathname === '/api/admin/restore') {
+    return handleBackup(req, res, pathname);
   }
 
   if (req.method === 'GET' && pathname === '/api/admin/contributions') {

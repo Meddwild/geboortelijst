@@ -81,7 +81,10 @@ Service → **Settings** → **Networking** → **Generate Domain**. You get som
 ### Costs and backups
 
 * Check **Usage** in Railway now and then. This site should stay well within the $5 included in Hobby.
-* Make a backup now and then: `/admin` → **Bijdragen** (contributions) → **Download back-up**. This saves all gifts and contributions in one JSON file.
+* **Back-ups:** at the top of `/admin` there's a **Back-up** panel:
+  * **⬇ Download back-up** saves all gifts and contributions in one file (`geboortelijst-backup-<date>_<time>.json`). Do this regularly, e.g. after adding gifts and after a few contributions.
+  * **⬆ Back-up terugzetten** (restore backup) uploads such a file and replaces the current gifts and contributions with it. A plain `gifts.json` also works; then only the gifts are replaced and the contributions stay.
+  * Before every restore, the server saves a copy of the current data in `backups/` in the data folder (on Railway: on the volume), in case you picked the wrong file.
 
 ## Adding gifts
 

@@ -24,6 +24,19 @@
     </form>
 
     <div id="panel" hidden>
+      <section class="panel-card backup-bar" aria-label="Back-up">
+        <div>
+          <strong>Back-up</strong>
+          <p class="muted small">Download af en toe een back-up van alle cadeaus en bijdragen. Daarmee kan je alles terugzetten als er iets misloopt.</p>
+        </div>
+        <div class="backup-actions">
+          <button class="btn primary" type="button" id="backupBtn">⬇ Download back-up</button>
+          <button class="btn" type="button" id="restoreBtn">⬆ Back-up terugzetten</button>
+          <input type="file" id="restoreFile" accept=".json,application/json" hidden>
+        </div>
+        <p class="small backup-status" id="backupStatus" role="status" hidden></p>
+      </section>
+
       <div class="filters tabs" role="tablist">
         <button type="button" class="chip active" role="tab" aria-selected="true" data-tab="gifts">Cadeaus</button>
         <button type="button" class="chip" role="tab" aria-selected="false" data-tab="contributions">Bijdragen</button>
@@ -88,7 +101,7 @@
       <!-- ---------- contributions ---------- -->
       <section id="tab-contributions" hidden>
         <div class="summary" id="summary"></div>
-        <p><button class="btn" type="button" id="backupBtn" style="width:auto">Download back-up (cadeaus + bijdragen)</button></p>
+
         <div class="table-wrap">
           <table>
             <thead>
@@ -286,16 +299,62 @@
         </tr>`).join('') || '<tr><td colspan="9" class="muted">Nog geen bijdragen.</td></tr>';
     }
 
+    // ---------- backup & restore ----------
+
+    function backupStatus(text, isError = false) {
+      $('backupStatus').textContent = text;
+      $('backupStatus').classList.toggle('error', isError);
+      $('backupStatus').hidden = !text;
+    }
+
     $('backupBtn').addEventListener('click', async () => {
-      const [gifts, contributions] = await Promise.all([api('/api/admin/gifts'), api('/api/admin/contributions')]);
-      const blob = new Blob([JSON.stringify({ exportedAt: new Date().toISOString(), gifts, contributions }, null, 2)], { type: 'application/json' });
-      const a = document.createElement('a');
-      a.href = URL.createObjectURL(blob);
-      a.download = `geboortelijst-backup-${new Date().toISOString().slice(0, 10)}.json`;
-      a.click();
-      setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+      try {
+        const data = await api('/api/admin/backup');
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
+        const a = document.createElement('a');
+        a.href = URL.createObjectURL(blob);
+        const d = new Date(); const pad = (n) => String(n).padStart(2, '0');
+        a.download = `geboortelijst-backup-${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}_${pad(d.getHours())}u${pad(d.getMinutes())}.json`; // local time
+        document.body.append(a);
+        a.click();
+        a.remove();
+        setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+        backupStatus(`Back-up gedownload: ${data.gifts.length} cadeaus en ${data.contributions.length} bijdragen.`);
+      } catch (err) {
+        backupStatus(err.message, true);
+      }
     });
 
+    $('restoreBtn').addEventListener('click', () => $('restoreFile').click());
+
+    $('restoreFile').addEventListener('change', async (e) => {
+      const file = e.target.files[0];
+      e.target.value = ''; // allow choosing the same file again later
+      if (!file) return;
+      let data;
+      try {
+        data = JSON.parse(await file.text());
+      } catch {
+        return backupStatus('Dit bestand kan niet gelezen worden. Kies een back-up (.json) van deze site.', true);
+      }
+      const gifts = Array.isArray(data) ? data : data && data.gifts;
+      if (!Array.isArray(gifts)) return backupStatus('Dit bestand bevat geen cadeaulijst.', true);
+      const contributions = Array.isArray(data.contributions) ? data.contributions : null;
+      const when = data.exportedAt ? `van ${new Date(data.exportedAt).toLocaleString('nl-BE')} ` : '';
+      const what = `De back-up ${when}(${gifts.length} cadeaus${contributions ? `, ${contributions.length} bijdragen` : ''})`;
+      const warning = contributions
+        ? 'Alle huidige cadeaus én bijdragen worden vervangen.'
+        : 'Alle huidige cadeaus worden vervangen. De bijdragen blijven zoals ze zijn.';
+      if (!confirm(`${what} terugzetten?\n\n${warning}\nEr wordt eerst automatisch een kopie van de huidige gegevens bewaard op de server.`)) return;
+      try {
+        const result = await api('/api/admin/restore', { method: 'POST', body: JSON.stringify(data) });
+        fillForm(null);
+        await refresh();
+        backupStatus(`Teruggezet: ${result.gifts} cadeaus${result.contributions !== null ? ` en ${result.contributions} bijdragen` : ''}. De vorige gegevens staan nog op de server als ${result.safetyCopy}.`);
+      } catch (err) {
+        backupStatus(err.message, true);
+      }
+    });
     // ---------- shared ----------
 
     function connectLive() {
