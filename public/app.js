@@ -379,6 +379,8 @@ function showPay({ gift, method, amount, name, reference }) {
   const remittance = ascii(`Geboortelijst ${reference} ${gift.name} - ${name}`).slice(0, 140);
   $('payAmount').textContent = euro(amount);
   $('payAmount2').textContent = euro(amount);
+  $('copyAmount').dataset.copyText = amount.toFixed(2).replace('.', ',');
+  state.qrName = `qr-geboortelijst-${reference}.png`;
   $('payName').textContent = c.beneficiary;
   $('payIban').textContent = formatIban(c.iban);
   $('payRef').textContent = remittance;
@@ -481,6 +483,49 @@ function renderQr(payload) {
   qr.addData(payload);
   qr.make();
   el.innerHTML = qr.createSvgTag(6, 4);
+  prepareQrImage(qr);
+}
+
+// PNG of the QR code, prepared up front so "save" can share it straight from the tap
+// (iOS only allows the share sheet directly inside a user gesture).
+function prepareQrImage(qr) {
+  state.qrBlob = null;
+  const count = qr.getModuleCount();
+  const cell = 12;
+  const margin = 4 * cell;
+  const size = count * cell + margin * 2;
+  const canvas = document.createElement('canvas');
+  canvas.width = canvas.height = size;
+  const ctx = canvas.getContext('2d');
+  ctx.fillStyle = '#fff';
+  ctx.fillRect(0, 0, size, size);
+  ctx.fillStyle = '#000';
+  for (let r = 0; r < count; r++) {
+    for (let c = 0; c < count; c++) {
+      if (qr.isDark(r, c)) ctx.fillRect(margin + c * cell, margin + r * cell, cell, cell);
+    }
+  }
+  canvas.toBlob((blob) => { state.qrBlob = blob; }, 'image/png');
+}
+
+async function saveQr() {
+  const blob = state.qrBlob;
+  if (!blob) return;
+  const file = new File([blob], state.qrName || 'qr-geboortelijst.png', { type: 'image/png' });
+  if (navigator.canShare?.({ files: [file] })) {
+    try {
+      await navigator.share({ files: [file], title: 'QR-code geboortelijst' });
+      return;
+    } catch (err) {
+      if (err.name === 'AbortError') return; // guest closed the share sheet
+    }
+  }
+  const url = URL.createObjectURL(blob);
+  const a = Object.assign(document.createElement('a'), { href: url, download: file.name });
+  document.body.append(a);
+  a.click();
+  a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 10_000);
 }
 
 // ---------- events ----------
@@ -521,10 +566,10 @@ document.addEventListener('click', async (e) => {
 
   if (e.target.closest('[data-close]')) return $('dialog').close();
 
-  const copy = e.target.closest('[data-copy]');
+  const copy = e.target.closest('[data-copy], #copyAmount');
   if (copy) {
     try {
-      await navigator.clipboard.writeText($(copy.dataset.copy).textContent);
+      await navigator.clipboard.writeText(copy.dataset.copyText ?? $(copy.dataset.copy).textContent);
       copy.textContent = 'gekopieerd ✓';
       setTimeout(() => (copy.textContent = 'kopieer'), 1500);
     } catch { /* clipboard unavailable - user can still select the text */ }
@@ -535,6 +580,7 @@ $('dialog').addEventListener('click', (e) => { if (e.target === $('dialog')) $('
 $('form').addEventListener('change', (e) => { if (e.target.name === 'method') updateMethodUi(); });
 $('form').addEventListener('submit', submit);
 $('payConfirm').addEventListener('click', confirmPending);
+$('saveQr').addEventListener('click', saveQr);
 $('payCancel').addEventListener('click', () => { state.pending = null; $('dialog').close(); });
 $('hideComplete').addEventListener('change', renderGrid);
 $('onlyFavorites').addEventListener('change', renderGrid);

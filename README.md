@@ -130,6 +130,7 @@ The jungle decorations (leaves, hot-air balloon, dotted flight route, baby giraf
 
 1. A guest chooses a gift, then an amount (or the whole gift) and their name, and clicks **Verder** (next). **Nothing is saved yet.**
 2. **Contribute by bank transfer:** they see a QR code with your IBAN, the amount and a payment reference like `Geboortelijst 6VJ762 Kinderwagen - Oma`. After paying, they click **Ik heb betaald** (I've paid). Only then is the contribution added to the list, live for everyone. **Annuleren** (cancel), or closing the popup, saves nothing.
+   * **On a phone** (where you can't scan your own screen), an extra block appears: **📥 QR-code bewaren** (save QR code) saves the QR code as an image, through the share menu or as a download. In the banking app, guests choose to scan a QR code from a photo or gallery. Alternatively, they copy IBAN, amount and reference with the **kopieer** (copy) buttons. A link that opens Bancontact/Payconiq with the details filled in isn't possible without a paid merchant account.
 3. **"Ik koop het zelf"** (I'll buy it myself): they see a short summary and click **Bevestigen** (confirm). The whole gift is then reserved in their name.
 4. **Someone else got there first?** While the QR code is on screen, the guest gets a warning if the gift fills up meanwhile. If they had already paid and confirm anyway, the payment is still recorded (money is never lost), but marked **⚠ te veel** (too much) in `/admin`, so you know to sort it out.
 ## Your routine

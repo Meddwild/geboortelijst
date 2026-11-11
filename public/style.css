@@ -292,6 +292,14 @@ a.btn { text-decoration: none; color: var(--ink); }
 
 .qr { display: grid; place-items: center; padding: 8px; background: #fff; border-radius: 14px; border: 1.5px dashed var(--sage); }
 .qr svg { width: min(240px, 100%); height: auto; }
+/* Phone help: only on touch screens, where scanning your own screen is impossible. */
+.mobile-pay {
+  display: none; margin: 12px 0; padding: 12px 14px; border-radius: 14px;
+  background: var(--tag, #fdf3e4); text-align: left;
+}
+.mobile-pay p { margin: 0 0 10px; }
+.mobile-pay .btn { width: 100%; }
+@media (pointer: coarse) { .mobile-pay { display: block; } }
 .bank { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; margin: 0; font-size: .95rem; }
 .bank dt { color: var(--muted); }
 .bank dd { margin: 0; font-weight: 700; word-break: break-word; }

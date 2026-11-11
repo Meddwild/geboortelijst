@@ -108,10 +108,14 @@
       <div id="payBlock">
         <p>Scan de QR-code met je bankapp om <strong id="payAmount"></strong> over te schrijven.</p>
         <div class="qr" id="qr"></div>
+        <div class="mobile-pay">
+          <p class="small"><strong>Op je gsm?</strong> Dan kan je de QR-code niet scannen met hetzelfde toestel. Bewaar ze als afbeelding en kies in je bankapp bij <em>QR-code scannen</em> voor een foto uit je galerij. Of kopieer de gegevens hieronder in een gewone overschrijving.</p>
+          <button class="btn" type="button" id="saveQr">📥 QR-code bewaren</button>
+        </div>
         <dl class="bank">
           <dt>Begunstigde</dt><dd id="payName"></dd>
           <dt>IBAN</dt><dd><span id="payIban"></span> <button class="copy" type="button" data-copy="payIban">kopieer</button></dd>
-          <dt>Bedrag</dt><dd id="payAmount2"></dd>
+          <dt>Bedrag</dt><dd><span id="payAmount2"></span> <button class="copy" type="button" id="copyAmount">kopieer</button></dd>
           <dt>Mededeling</dt><dd><span id="payRef"></span> <button class="copy" type="button" data-copy="payRef">kopieer</button></dd>
         </dl>
         <p class="muted small">Vermeld zeker de mededeling, zo weten we van wie het cadeau komt. Klik na het betalen op <strong>Ik heb betaald</strong>: pas dan komt je bijdrage op de lijst.</p>
